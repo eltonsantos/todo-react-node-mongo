@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, FormEvent } from "react"
-import { FiTrash } from "react-icons/fi"
+import { FiEdit, FiTrash } from "react-icons/fi"
 import { api } from "./services/api"
 
 interface CustomerProps {
@@ -57,8 +57,12 @@ export function App() {
     }
   }
 
+  async function handleUpdate(id: string) {
+    console.log(id)
+  }
+
   return (
-    <div className="w-full min-h-screen bg-gray-900 flex justify-center px-4">
+    <div className="w-full min-h-screen bg-gray-900 flex justify-center px-10">
       <main className="my-10 w-full md:max-w-2x1">
         <h1 className="text-4x1 font-medium text-white">Clientes</h1>
 
@@ -90,6 +94,9 @@ export function App() {
 
               <button onClick={() => handleDelete(customer.id)} className="bg-red-500 w-7 h-7 flex items-center justify-center rounded-lg absolute right-0 -top-2">
                 <FiTrash size={18} color="#fff" />
+              </button>
+              <button onClick={() => handleUpdate(customer.id)} className="bg-blue-500 w-7 h-7 flex items-center justify-center rounded-lg absolute right-8 -top-2">
+                <FiEdit size={18} color="#fff" />
               </button>
             </article>
           ))}
