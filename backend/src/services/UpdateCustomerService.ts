@@ -10,6 +10,8 @@ interface UpdateCustomerProps {
 class UpdateCustomerService {
   async execute({ id, name, email, status }: UpdateCustomerProps) {
 
+    console.log(id)
+    
     if (!id) {
       throw new Error("Solicitação inválida")
     }

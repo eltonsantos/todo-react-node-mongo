@@ -13,8 +13,11 @@ interface CustomerProps {
 export function App() {
 
   const [customers, setCustomers] = useState<CustomerProps[]>([])
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const nameRef = useRef<HTMLInputElement | null>(null)
   const emailRef = useRef<HTMLInputElement | null>(null)
+  const statusRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     loadCustomers()
@@ -30,14 +33,21 @@ export function App() {
 
     if (!nameRef.current?.value || !emailRef.current?.value) return
 
-    const response = await api.post("/customer", {
-      name: nameRef.current?.value,
-      email: emailRef.current?.value
-    })
+    if (isEditing && editingId) {
+      await handleUpdate(editingId)
+    } else {
+      const response = await api.post("/customer", {
+        name: nameRef.current?.value,
+        email: emailRef.current?.value
+      })
+  
+      setCustomers(allCustomers => [...allCustomers, response.data])
+    }
 
-    setCustomers(allCustomers => [...allCustomers, response.data])
     nameRef.current.value = ''
     emailRef.current.value = ''
+    setIsEditing(false)
+    setEditingId(null)
   }
 
   async function handleDelete(id: string) {
@@ -58,7 +68,43 @@ export function App() {
   }
 
   async function handleUpdate(id: string) {
-    console.log(id)
+    try {
+      const response = await api.put(`/customer?id=${id}`, {
+        name: nameRef.current?.value,
+        email: emailRef.current?.value,
+        status: statusRef.current?.checked || false
+      })
+
+      const updatedCustomer = response.data
+
+      setCustomers(allCustomers =>
+        allCustomers.map(customer =>
+          customer.id === id ? updatedCustomer : customer
+        )
+      )
+  
+      console.log("Usuário atualizado:", updatedCustomer)
+
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  function startEditing(id: string) {
+    const customerToEdit = customers.find((customer) => customer.id === id);
+    if (customerToEdit) {
+      if (nameRef.current) {
+        nameRef.current.value = customerToEdit.name;
+      }
+      if (emailRef.current) {
+        emailRef.current.value = customerToEdit.email;
+      }
+      if (statusRef.current) {
+        statusRef.current.checked = customerToEdit.status;
+      }
+      setIsEditing(true);
+      setEditingId(id);
+    }
   }
 
   return (
@@ -73,7 +119,10 @@ export function App() {
           <label className="font-medium text-white">Email:</label>
           <input ref={emailRef} type="text" placeholder="Digite o email" className="w-full mb-5 p-2 rounded" />
 
-          <input type="submit" value="Cadastrar" className="w-full cursor-pointer bg-green-500 p-2 rounded font-medium" />
+          <label className="font-medium text-white">Status:</label>
+          <input ref={statusRef} type="checkbox" className="mb-5" />
+
+          <input type="submit" value={isEditing ? "Atualizar" : "Cadastrar"} className="w-full cursor-pointer bg-green-500 p-2 rounded font-medium" />
         </form>
 
         <section className="flex flex-col gap-4">
@@ -95,7 +144,7 @@ export function App() {
               <button onClick={() => handleDelete(customer.id)} className="bg-red-500 w-7 h-7 flex items-center justify-center rounded-lg absolute right-0 -top-2">
                 <FiTrash size={18} color="#fff" />
               </button>
-              <button onClick={() => handleUpdate(customer.id)} className="bg-blue-500 w-7 h-7 flex items-center justify-center rounded-lg absolute right-8 -top-2">
+              <button onClick={() => startEditing(customer.id)} className="bg-blue-500 w-7 h-7 flex items-center justify-center rounded-lg absolute right-8 -top-2">
                 <FiEdit size={18} color="#fff" />
               </button>
             </article>
